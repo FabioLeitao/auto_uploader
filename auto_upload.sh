@@ -1,7 +1,9 @@
-#!/usr/bin/bash -x
+#!/usr/bin/bash 
 COMMAND=$0
 ARGUMENTO=$1
 FLAG=$2
+QUANTOS=$#
+DEBUG=false
 TIMESTAMP=`date +"%Y-%m-%d %T"`
 CONTADOR=0
 
@@ -12,30 +14,162 @@ PASTA_CONTADOR="${PASTA_HOME}/contador"
 PASTA_BKP="${PASTA_HOME}/bkp"
 PASTA_LOG="${PASTA_HOME}/log"
 ARQUIVO_LOG="${PASTA_LOG}/evidencias.log"
+ARQUIVO_LISTA="${PASTA_LOG}/lista.log"
+ARQUIVO_LISTB="${PASTA_LOG}/listb.log"
+ARQUIVO_CONTA="${PASTA_LOG}/conta.log"
+ARQUIVO_CONTB="${PASTA_LOG}/contb.log"
+ARQUIVO_SUM="${PASTA_LOG}/sum.log"
+ARQUIVO_MOVE="${PASTA_LOG}/move.log"
+ARQUIVO_TOTAL="${PASTA_CONTADOR}/contador.log"
 SFTP_HOST="sftp.riobrasilterminal.com"
 SFTP_CREDENCIAL="leitao"
+SFTP_ID="~/.ssh/id_ed25519.pub"
+SFTP_PASTA_REMOTA="/tmp/arquivo/sap"
 
+
+WHOAMI=`which whoami`
+HOSTNAME=`which hostname`
+TOUCH=`which touch`
 SFTP=`which sftp`
 SCP=`which scp`
+SUM=`which sha256sum`
+DIFF=`which diff`
+EXPR=`which expr`
+CAT=`which cat`
+AWK=`which awk`
+SED=`which sed`
+WC=`which wc`
+NC=`which nc`
 ID=`which id`
+QUAL=`${HOSTNAME} -s`
+QUEM=`${WHOAMI}`
+
+function transfere_(){
+	if [ ${SSHIsRunning} ] || [ ${PRONTO} ] ; then
+		for FILE in ${FILES} ; do
+			TRANSMITIDO=false
+			FALHOU=false
+			$SCP -q -4 -o ConnectionAttempts=4 ${PASTA_ATIVA}/${FILE} ${SFTP_CREDENCIAL}@${SFTP_HOST}:${SFTP_PASTA_REMOTA}
+			ULTIMA=$?
+				if [ ${ULTIMA} -ne 0 ] ; then
+					mv ${PASTA_ATIVA}/${FILE} ${PASTA_ORIGEM}/${FILE}
+					do_log_ OK - Movido arquivo ${FILE} para pasta de origem para tentar novamente
+					FALHOU=true
+				else
+					mv ${PASTA_ATIVA}/${FILE} ${PASTA_BKP}/${FILE}
+					do_log_ OK - Movido arquivo ${FILE} para pasta de bkp para armazenamento temporário
+					CONTADOR=`${CAT} ${ARQUIVO_TOTAL}`
+					NOVO_TOTAL=`${EXPR} ${CONTADOR} + 1`
+					echo ${NOVO_TOTAL} > ${ARQUIVO_TOTAL}
+					do_log_ Ok - Total ${NOVO_TOTAL} transmitidos.
+					TRANSMITIDO=true
+				fi
+		done
+	else
+		echo Nao vai dar
+	fi
+	CONTADOR=`${CAT} ${ARQUIVO_TOTAL}`
+	echo "0:${CONTADOR}:OK - Total ${CONTADOR} arquivos transmitidos."    # returncode 0 = put sensor in OK status
+	do_log_ OK - Transferência completada com sucesso.
+}
+
+function arruma_(){
+	PRONTO=false
+	cd ${PASTA_ORIGEM}
+	if [ ! -f ${ARQUIVO_LISTA} ] ; then
+		ls -ls > ${ARQUIVO_LISTA}
+	else
+		ls -ls > ${ARQUIVO_LISTB}
+		${DIFF} -q ${ARQUIVO_LISTA} ${ARQUIVO_LISTB}
+		ULTIMA=$?
+		if [ ${ULTIMA} -ne 0 ] ; then
+			ls -ls > ${ARQUIVO_LISTA}
+			ls -ls | ${WC} -l > ${ARQUIVO_CONTA}
+			CONTA=`${CAT} ${ARQUIVO_CONTA}`
+			if [ ${CONTA} -gt 1 ] ; then
+				${SUM} * > ${ARQUIVO_SUM}
+			fi
+			die_ ;
+		fi
+	fi
+	LISTADO=true
+	if [ ! -f ${ARQUIVO_CONTA} ] ; then
+		ls -ls | ${WC} -l > ${ARQUIVO_CONTA}
+	else 
+		ls -ls | ${WC} -l > ${ARQUIVO_CONTB}
+		${DIFF} -q ${ARQUIVO_CONTA} ${ARQUIVO_CONTB}
+		ULTIMA=$?
+		if [ ${ULTIMA} -ne 0 ] ; then
+			ls -ls | ${WC} -l > ${ARQUIVO_CONTA}
+			CONTA=`${CAT} ${ARQUIVO_CONTA}`
+			if [ ${CONTA} -gt 1 ] ; then
+                        	${SUM} * > ${ARQUIVO_SUM}
+			fi
+			die_ ;
+		fi
+
+	fi
+	CONTADO=true
+	if [ ! -f ${ARQUIVO_SUM} ] ; then
+		CONTA=`${CAT} ${ARQUIVO_CONTA}`
+		if [ ${CONTA} -gt 1 ] ; then
+			${SUM} * > ${ARQUIVO_SUM}
+		fi
+		die_ ;
+	else
+		${SUM} --quiet -c ${ARQUIVO_SUM}
+		ULTIMA=$?
+		if [ ${ULTIMA} -ne 0 ] ; then
+			CONTA=`${CAT} ${ARQUIVO_CONTA}`
+			if [ ${CONTA} -gt 1 ] ; then
+                        	${SUM} * > ${ARQUIVO_SUM}
+			fi
+			die_ ; 
+		fi
+	fi
+	SOMADO=true
+	${CAT} ${ARQUIVO_SUM} | ${AWK} '{print $2}' > ${ARQUIVO_MOVE}
+	FILES=`${CAT} ${ARQUIVO_MOVE}`
+	for FILE in ${FILES} ; do
+		mv ${PASTA_ORIGEM}/${FILE} ${PASTA_ATIVA}/${FILE}
+		do_log_ WARN - Movido arquivo ${FILE} para pasta de transferência
+	done
+	rm -f ${ARQUIVO_LISTA} ${ARQUIVO_LISTB} 
+	rm -f ${ARQUIVO_CONTA} ${ARQUIVO_CONTB}
+	rm -f ${ARQUIVO_SUM}
+	LIMPADO=true
+	cd - 
+	${TOUCH} ${ARQUIVO_TOTAL}
+	PRONTO=true
+}
 
 function check_service_(){
-	VMIsRunning=false
-	BUSCA=`${QM} list | grep ${ARGUMENTO} | grep running`
+	SSHIsRunning=false
+	BUSCA=`${NC} -q 1 -w 2 ${SFTP_HOST} 22 `
 	ULTIMA=$?
 	if [ ${ULTIMA} -eq 0 ] ; then
-		VMIsRunning=true
-		VM_NAME=`${QM} list | grep ${ARGUMENTO} | awk -F' ' {'print $2'}`
-		echo "0:200:OK - VM ${ARGUMENTO} - ${VM_NAME} is running."    # returncode 0 = put sensor in OK status
+		SSHIsRunning=true
+		#echo "0:200:OK - Server ${SFTP_HOST} is running SSH."    # returncode 0 = put sensor in OK status
+		#do_log_ OK - Server ${SFTP_HOST} is running SSH.
 	else
 		#echo "1:404:WARNING - VM ${ARGUMENTO} is not present or not running."    # returncode 1 = Warning - put sensor in WARNING status
-		echo "5:404:ERROR - VM ${ARGUMENTO} is not present or not running."    # returncode 5 = Content Error - put sensor in WARNING status
+		echo "5:404:ERROR - Server ${SFTP_HOST} is not present or not running SSH."    # returncode 5 = Content Error - put sensor in WARNING status
+		do_log_ ERROR - Server ${SFTP_HOST} is not present or not running SSH.
 		exit 5
 	fi
 }
 
 die_(){
 	exit 999
+}
+
+is_usr_(){
+	local id=$(${ID} -u)
+	if [ $id -ne 1000 ] ; then
+		echo "4:500:ERROR - You have to be usr leitao to run $0."    # returncode 4 = Protocol Error - put sensor in DOWN status
+		do_log_ ERROR - You have to be usr leitao to run $0.
+		die_ ;
+	fi
 }
 
 is_root_(){
@@ -52,7 +186,11 @@ do_log_(){
 	LOG_=$@
 	TIMESTAMP=`date +"%Y-%m-%d %T"`
 	touch ${ARQUIVO_LOG}
-	echo "${TIMESTAMP} - ${LOG_}" >> ${ARQUIVO_LOG}
+	if [ ${DEBUG} ] ; then
+		echo "${TIMESTAMP} - ${LOG_}" | tee -a ${ARQUIVO_LOG}
+	else
+		echo "${TIMESTAMP} - ${LOG_}" >> ${ARQUIVO_LOG}
+	fi
 }
 
 function preparation_(){
@@ -92,6 +230,7 @@ function preparation_(){
 		die_ ; 
 	fi
 #	is_root_;
+	is_usr_;
 }
 
 function ajuda_(){
@@ -100,26 +239,33 @@ function ajuda_(){
 }
 
 function atua_no_flag_(){
-        if [ $# -gt 1 ]; then
+        if [ ${QUANTOS} -gt 2 ]; then
                 ajuda_;
         else
           case "${FLAG}" in
                 -h|--help)
                         ajuda_ ;
                         ;;
+                -v|--vorbose)
+			echo "Server Server: ${QUAL}"
+			DEBUG=true 
+                        ;;
                 *)
+			DEBUG=false
                         ;;
           esac
         fi
+	preparation_   ;
+	check_service_ ;
+	arruma_        ;
+	transfere_     ;
 }
 
 function main_(){
-        atua_no_flag_ ;
-	preparation_;
-#	check_service_;
+        atua_no_flag_  ;
 }
 
-if [ $# -lt 1 ]; then
+if [ ${QUANTOS} -lt 1 ]; then
         	ajuda_;
 else
   case "${ARGUMENTO}" in
@@ -127,6 +273,11 @@ else
                	ajuda_ ;
                 exit 1
        	        ;;
+        -v|--vorbose)
+		echo "Server Server: ${QUAL}"
+		DEBUG=true 
+		main_;
+                ;;
         *)
 		main_;
                	;;
