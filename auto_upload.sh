@@ -21,10 +21,11 @@ ARQUIVO_CONTB="${PASTA_LOG}/contb.log"
 ARQUIVO_SUM="${PASTA_LOG}/sum.log"
 ARQUIVO_MOVE="${PASTA_LOG}/move.log"
 ARQUIVO_TOTAL="${PASTA_CONTADOR}/contador.log"
-SFTP_HOST="sftp.riobrasilterminal.com"
-SFTP_CREDENCIAL="leitao"
+SFTP_HOST="p-prdftp.ictsi.net"
+SFTP_PORT="1122"
+SFTP_CREDENCIAL="P-PRDFTP\PRD_EAMS_RIO"
 SFTP_ID="~/.ssh/id_ed25519.pub"
-SFTP_PASTA_REMOTA="/tmp/arquivo/sap"
+SFTP_PASTA_REMOTA="./leitao"
 
 
 WHOAMI=`which whoami`
@@ -145,7 +146,7 @@ function arruma_(){
 
 function check_service_(){
 	SSHIsRunning=false
-	BUSCA=`${NC} -q 1 -w 2 ${SFTP_HOST} 22 `
+	BUSCA=`${NC} -q 1 -w 2 ${SFTP_HOST} ${SFTP_PORT} `
 	ULTIMA=$?
 	if [ ${ULTIMA} -eq 0 ] ; then
 		SSHIsRunning=true
