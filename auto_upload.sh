@@ -7,7 +7,7 @@ DEBUG=false
 TIMESTAMP=`date +"%Y-%m-%d %T"`
 CONTADOR=0
 
-PASTA_HOME="/home/leitao/arquivo"
+PASTA_HOME="${HOME}/arquivo"
 PASTA_ORIGEM="${PASTA_HOME}/enviar"
 PASTA_ATIVA="${PASTA_HOME}/transferindo"
 PASTA_CONTADOR="${PASTA_HOME}/contador"
