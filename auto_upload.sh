@@ -1,4 +1,4 @@
-#!/usr/bin/bash 
+#!/usr/bin/bash -x
 COMMAND=$0
 ARGUMENTO=$1
 FLAG=$2
@@ -37,6 +37,7 @@ SUM=`which sha256sum`
 DIFF=`which diff`
 EXPR=`which expr`
 CAT=`which cat`
+CUT=`which cut`
 AWK=`which awk`
 SED=`which sed`
 WC=`which wc`
@@ -129,11 +130,18 @@ function arruma_(){
 		fi
 	fi
 	SOMADO=true
-	${CAT} ${ARQUIVO_SUM} | ${AWK} '{print $2}' > ${ARQUIVO_MOVE}
+	${CAT} ${ARQUIVO_SUM} | ${CUT} -d " " -f3- > ${ARQUIVO_MOVE}
 	FILES=`${CAT} ${ARQUIVO_MOVE}`
+	for FILE in * ; do
+		FILE_NOVO=`echo ${FILE} | sed -e 's/ /_/g'| sed -e 'y/ñçãāáǎàēéěèīíǐìõōóǒòūúǔùǖǘǚǜÑÇÃĀÁǍÀĒÉĚÈĪÍǏÌÕŌÓǑÒŪÚǓÙǕǗǙǛ/ncaaaaaeeeeiiiiooooouuuuüüüüNCAAAAAEEEEIIIIOOOOOUUUUÜÜÜÜ/'`
+		mv "./${FILE}" "./${FILE_NOVO}"
+		do_log_ WARN - Arquivo ${FILE} renomeado para compatibilidade.
+	done
+	${CAT} ${ARQUIVO_MOVE} | ${SED} -e 's/ /_/g' | ${SED} -e 'y/ñçãāáǎàēéěèīíǐìõōóǒòūúǔùǖǘǚǜÑÇÃĀÁǍÀĒÉĚÈĪÍǏÌÕŌÓǑÒŪÚǓÙǕǗǙǛ/ncaaaaaeeeeiiiiooooouuuuüüüüNCAAAAAEEEEIIIIOOOOOUUUUÜÜÜÜ/' > ${ARQUIVO_MOVE}.2
+	FILES=`${CAT} ${ARQUIVO_MOVE}.2`
 	for FILE in ${FILES} ; do
 		mv ${PASTA_ORIGEM}/${FILE} ${PASTA_ATIVA}/${FILE}
-		do_log_ WARN - Movido arquivo ${FILE} para pasta de transferência
+		do_log_ WARN - Movido arquivo ${FILE} para pasta de transferência.
 	done
 	rm -f ${ARQUIVO_LISTA} ${ARQUIVO_LISTB} 
 	rm -f ${ARQUIVO_CONTA} ${ARQUIVO_CONTB}
@@ -146,7 +154,7 @@ function arruma_(){
 
 function check_service_(){
 	SSHIsRunning=false
-	BUSCA=`${NC} -q 1 -w 2 ${SFTP_HOST} ${SFTP_PORT} `
+	BUSCA=`${NC} -z -w2 ${SFTP_HOST} ${SFTP_PORT} `
 	ULTIMA=$?
 	if [ ${ULTIMA} -eq 0 ] ; then
 		SSHIsRunning=true
