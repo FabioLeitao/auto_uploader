@@ -1,4 +1,15 @@
 
+v1.0.2 / 2024-03-28
+==================
+
+  * Arrumada pasta remota conforme indicado pela equipe em Manila
+  * renomeada para arquivo_mnt
+  * corrigida pasta HOME para ser relativa ao usuario
+  * Merge branch 'main' of github.com:FabioLeitao/auto_uploader Merge
+  * Renomeando arquivo para compatibilidade de caracteres antes de tentar transmitir (tirando espaços e símbolos)
+  * Update README.md
+  * Completando informações no README
+
 v1.0.1 / 2024-03-26
 ==================
 
