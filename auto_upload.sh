@@ -25,7 +25,7 @@ SFTP_HOST="p-prdftp.ictsi.net"
 SFTP_PORT="1122"
 SFTP_CREDENCIAL="P-PRDFTP\PRD_EAMS_RIO"
 SFTP_ID="~/.ssh/id_ed25519.pub"
-SFTP_PASTA_REMOTA="./leitao"
+SFTP_PASTA_REMOTA="./"
 
 
 WHOAMI=`which whoami`
@@ -57,6 +57,7 @@ function transfere_(){
 					mv ${PASTA_ATIVA}/${FILE} ${PASTA_ORIGEM}/${FILE}
 					do_log_ OK - Movido arquivo ${FILE} para pasta de origem para tentar novamente
 					FALHOU=true
+					die_ ;
 				else
 					mv ${PASTA_ATIVA}/${FILE} ${PASTA_BKP}/${FILE}
 					do_log_ OK - Movido arquivo ${FILE} para pasta de bkp para armazenamento temporário
