@@ -6,6 +6,10 @@ QUANTOS=$#
 DEBUG=FALSE
 TIMESTAMP=`date +"%Y-%m-%d %T"`
 CONTADOR=0
+LANG=en_US.UTF-8
+LC_ALL=C.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=C.UTF-8
 
 PASTA_HOME="${HOME}/arquivo_mnt"
 PASTA_ORIGEM="${PASTA_HOME}/enviar"
@@ -57,6 +61,8 @@ function transfere_(){
 					mv ${PASTA_ATIVA}/${FILE} ${PASTA_ORIGEM}/${FILE}
 					do_log_ OK - Movido arquivo ${FILE} para pasta de origem para tentar novamente
 					FALHOU=true
+                                        CONTADOR=`${CAT} ${ARQUIVO_TOTAL}`
+                                        echo "5:404:ERROR - Server ${SFTP_HOST} failed to transmit."    # returncode 5 = Content Error - put sensor in WARNING status
 					die_ ;
 				else
 					mv ${PASTA_ATIVA}/${FILE} ${PASTA_BKP}/${FILE}
@@ -108,6 +114,8 @@ function arruma_(){
 			if [ ${CONTA} -gt 1 ] ; then
                         	${SUM} * > ${ARQUIVO_SUM}
 			fi
+                        CONTADOR=`${CAT} ${ARQUIVO_TOTAL}`
+                        echo "0:${CONTADOR}:OK - Total ${CONTADOR} arquivos transmitidos."    # returncode 0 = put sensor in OK status
 			die_ ;
 		fi
 
@@ -127,6 +135,8 @@ function arruma_(){
 			if [ ${CONTA} -gt 1 ] ; then
                         	${SUM} * > ${ARQUIVO_SUM}
 			fi
+                        CONTADOR=`${CAT} ${ARQUIVO_TOTAL}`
+                        echo "0:${CONTADOR}:OK - Total ${CONTADOR} arquivos transmitidos."    # returncode 0 = put sensor in OK status
 			die_ ; 
 		fi
 	fi
@@ -176,8 +186,8 @@ die_(){
 is_usr_(){
 	local id=$(${ID} -u)
 	if [ $id -ne 1000 ] ; then
-		echo "4:500:ERROR - You have to be usr leitao to run $0."    # returncode 4 = Protocol Error - put sensor in DOWN status
-		do_log_ ERROR - You have to be usr leitao to run $0.
+		echo "4:500:ERROR - You have to be usr reload to run $0."    # returncode 4 = Protocol Error - put sensor in DOWN status
+		do_log_ ERROR - You have to be usr reload to run $0.
 		die_ ;
 	fi
 }
