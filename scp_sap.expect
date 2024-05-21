@@ -1,0 +1,30 @@
+#!/usr/bin/expect -f
+set PASTA_ATIVA [lindex $argv 0]
+set FILE [lindex $argv 1]
+set SFTP_CREDENCIAL [lindex $argv 2]
+set SFTP_HOST [lindex $argv 3]
+set SFTP_PASTA_REMOTA [lindex $argv 4]
+set PASSWORD [lindex $argv 5]
+
+spawn scp -q -4 $PASTA_ATIVA/$FILE $SFTP_CREDENCIAL@$SFTP_HOST:$SFTP_PASTA_REMOTA
+
+set timeout 15
+expect {
+    timeout {
+        puts "Connection timed out"
+        exit 1
+    }
+
+    "yes/no" {
+        send "yes\r"
+        exp_continue
+    }
+
+    "assword:" {
+#        send -- "B0.@n\$c8\r"
+	send -- "$PASSWORD\r"
+	expect eof
+    }
+}
+
+exit 0
