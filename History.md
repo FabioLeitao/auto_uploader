@@ -1,4 +1,9 @@
 
+v1.0.4 / 2024-05-21
+==================
+
+  * Corrigido bug do EMPTY SSH no PRTG, e texto do usuario para reload
+
 v1.0.3 / 2024-05-21
 ==================
 
