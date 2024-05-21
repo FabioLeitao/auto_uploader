@@ -21,7 +21,6 @@ expect {
     }
 
     "assword:" {
-#        send -- "B0.@n\$c8\r"
 	send -- "$PASSWORD\r"
 	expect eof
     }

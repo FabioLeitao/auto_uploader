@@ -52,7 +52,6 @@ function transfere_(){
 		for FILE in ${FILES} ; do
 			TRANSMITIDO=false
 			FALHOU=false
-			#$SCP -q -4 -o ConnectionAttempts=4 ${PASTA_ATIVA}/${FILE} ${SFTP_CREDENCIAL}@${SFTP_HOST}:${SFTP_PASTA_REMOTA}
 			$SAP_SCP ${PASTA_ATIVA} ${FILE} ${SFTP_CREDENCIAL} ${SFTP_HOST} ${SFTP_PASTA_REMOTA} "B0.@n\$c8"
 			ULTIMA=$?
 				if [ ${ULTIMA} -ne 0 ] ; then
