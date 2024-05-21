@@ -239,6 +239,11 @@ function preparation_(){
 		do_log_ ERROR - command id not found.
 		die_ ; 
 	fi
+	if [ ! -x ${NC} ] ; then
+		echo "3:500:ERROR - command nc not found."    # returncode = 3 = System Error - put sensor in DOWN status
+		do_log_ ERROR - command nc not found.
+		die_ ; 
+	fi
 #	is_root_;
 	is_usr_;
 }
