@@ -1,9 +1,9 @@
-#!/usr/bin/bash -x
+#!/usr/bin/bash 
 COMMAND=$0
 ARGUMENTO=$1
 FLAG=$2
 QUANTOS=$#
-DEBUG=false
+DEBUG=FALSE
 TIMESTAMP=`date +"%Y-%m-%d %T"`
 CONTADOR=0
 
@@ -83,7 +83,7 @@ function arruma_(){
 		ls -ls > ${ARQUIVO_LISTA}
 	else
 		ls -ls > ${ARQUIVO_LISTB}
-		${DIFF} -q ${ARQUIVO_LISTA} ${ARQUIVO_LISTB}
+		${DIFF} -qN ${ARQUIVO_LISTA} ${ARQUIVO_LISTB}
 		ULTIMA=$?
 		if [ ${ULTIMA} -ne 0 ] ; then
 			ls -ls > ${ARQUIVO_LISTA}
@@ -100,7 +100,7 @@ function arruma_(){
 		ls -ls | ${WC} -l > ${ARQUIVO_CONTA}
 	else 
 		ls -ls | ${WC} -l > ${ARQUIVO_CONTB}
-		${DIFF} -q ${ARQUIVO_CONTA} ${ARQUIVO_CONTB}
+		${DIFF} -qN ${ARQUIVO_CONTA} ${ARQUIVO_CONTB}
 		ULTIMA=$?
 		if [ ${ULTIMA} -ne 0 ] ; then
 			ls -ls | ${WC} -l > ${ARQUIVO_CONTA}
@@ -196,7 +196,7 @@ do_log_(){
 	LOG_=$@
 	TIMESTAMP=`date +"%Y-%m-%d %T"`
 	touch ${ARQUIVO_LOG}
-	if [ ${DEBUG} ] ; then
+	if [ ${DEBUG} = "TRUE" ] ; then
 		echo "${TIMESTAMP} - ${LOG_}" | tee -a ${ARQUIVO_LOG}
 	else
 		echo "${TIMESTAMP} - ${LOG_}" >> ${ARQUIVO_LOG}
@@ -258,10 +258,10 @@ function atua_no_flag_(){
                         ;;
                 -v|--vorbose)
 			echo "Server Server: ${QUAL}"
-			DEBUG=true 
+			DEBUG=TRUE
                         ;;
                 *)
-			DEBUG=false
+			DEBUG=FALSE
                         ;;
           esac
         fi
