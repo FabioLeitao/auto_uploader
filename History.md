@@ -1,4 +1,12 @@
 
+v1.0.3 / 2024-05-21
+==================
+
+  * Limpeza do codigo fonte
+  * Corrigido bug de teste do netcat
+  * Criada versão que interage com expect para passar senha sem public_key
+  * Corrigidos bugs de verbose do DEBUG e DIFF
+
 v1.0.2 / 2024-03-28
 ==================
 
